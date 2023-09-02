@@ -1,4 +1,4 @@
-use std::{io::Write, borrow::BorrowMut};
+use std::io::Write;
 
 struct Board {
     visual_board: String,
@@ -21,9 +21,22 @@ impl Board {
         Board { visual_board, logic_board, history: vec![] }
     }
 
-    fn update_visual_board(&mut self, user_play: String, new_symbol: char) {
+    fn update_visual_board(&mut self, user_play: char, new_symbol: char) {
         self.history.push(self.visual_board.clone());
-        self.visual_board = self.visual_board.replace(&user_play, &new_symbol.to_string());
+        self.visual_board = self.visual_board.replace(&user_play.to_string(), &new_symbol.to_string());
+    }
+
+    fn play_already_throwed(&mut self, user_play: char) {
+        let mut logic_board_line = self.get_logic_board_line_based_on_play(user_play);
+
+        println!("Line: {:?}", logic_board_line);
+    }
+
+    fn get_logic_board_line_based_on_play<'a>(&'a mut self, user_play: char) -> &'a mut Vec<char> {
+        println!("Radix: {:?}", user_play.to_digit(10));
+        let division = (user_play.to_digit(10).unwrap() as f32) / 3.0;
+        println!("Division Ceil: {}", division.ceil());
+        self.logic_board.get_mut((division.ceil() - 1.0) as usize).unwrap()
     }
 }
 
@@ -58,7 +71,7 @@ fn main() {
 
     loop {
         let current_player: &mut Player = players.get_mut(play_counter % 2).unwrap();
-        println!("{} turn, with symbol: {}[2J", current_player.name, current_player.symbol);
+        println!("{} turn, with symbol: {}", current_player.name, current_player.symbol);
         if current_player.previous_play != ' ' {
             println!("{} previously throwed {}", current_player.name, current_player.previous_play);
         }
@@ -70,7 +83,7 @@ fn main() {
 
         let mut user_play_int: u8 = 0;
 
-        match is_valid_input(&user_play) {
+        match is_valid_input(user_play) {
             Ok(user_play) => {
                 user_play_int = user_play;
             },
@@ -80,7 +93,9 @@ fn main() {
             }
         }
 
-        current_player.previous_play = user_play.chars().next().unwrap();
+        board.play_already_throwed(user_play);
+
+        current_player.previous_play = user_play;
         board.update_visual_board(user_play, current_player.symbol);
 
         println!("Board updated! ↓");
@@ -94,26 +109,25 @@ fn main() {
     }
 }
 
-fn is_valid_input(input: &str) -> Result<u8, String> {
-    match input.parse::<u8>() {
-        Ok(user_play) => {
+fn is_valid_input(input: char) -> Result<u8, String> {
+    match input.to_digit(10) {
+        Some(user_play) => {
             if user_play > 0 && user_play < 10 {
-                return Ok(user_play);
+                return Ok(user_play as u8);
             }
 
             return Err(String::from("Play need to be between 1 and 9."));
         }
 
-        Err(_) => Err(String::from("Play need to contain only number."))
+        None => Err(String::from("Play need to contain only number."))
     }
 }
 
-fn get_play_input() -> String {
+fn get_play_input() -> char {
     let mut user_play = String::new();
     let stdin = std::io::stdin();
 
     stdin.read_line(&mut user_play).unwrap();
-    user_play.pop();
 
-    user_play
+    user_play.chars().next().unwrap()
 }
