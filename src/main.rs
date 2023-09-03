@@ -1,4 +1,5 @@
 use std::io::Write;
+use tic_tac_toe::helpers::helpers;
 
 struct Board {
     visual_board: String,
@@ -41,9 +42,23 @@ impl Board {
         false
     }
 
-    fn has_winner(&self) {
+    fn has_winner(&self) -> bool {
         let parsed_logic_board = self.parse_logic_board();
-        
+        if self.has_line_winner(&parsed_logic_board) == true {
+            return true;
+        }
+
+        false
+    }
+
+    fn has_line_winner(&self, logic_board: &Vec<Vec<char>>) -> bool {
+        for line in logic_board {
+            if helpers::is_line_winner(line) == true {
+                return true;
+            }
+        }
+
+        false
     }
 
     fn parse_logic_board(&self) -> Vec<Vec<char>> {
@@ -122,7 +137,13 @@ fn main() {
         println!("Board updated! ↓");
         println!("{}", board.visual_board);
 
-        if has_winner == true || play_counter == 9 {
+        if board.has_winner() == true {
+            println!("Congratulations! {} is the winner!", current_player.name);
+            break;
+        }
+
+        if play_counter == 9 {
+            println!("The match ended with a draw!");
             break;
         }
 

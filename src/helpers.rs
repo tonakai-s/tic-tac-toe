@@ -1,19 +1,14 @@
 pub mod helpers {
-    pub fn every_same_element<T, F>(vector: &Vec<T>, validator: F) -> Option<bool>
-    where F: Fn(&T) -> bool {
-        let first_element = vector.get(0);
-        if first_element.is_none() {
-            return None;
-        }
+    pub fn is_line_winner(vector: &Vec<char>) -> bool {
+        let first_element = vector.get(0).unwrap();
 
         for item in vector.iter() {
-            let matched = validator(item);
-            if matched == false {
-                return Some(false);
+            if ( *item != *first_element ) || *item == ' ' {
+                return false;
             }
         }
 
-        Some(true)
+        true
     }
 
     // pub fn has_element<'a, T, U>(vector: Vec<T>, element: U) -> Option<bool>
