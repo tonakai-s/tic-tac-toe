@@ -48,12 +48,31 @@ impl Board {
             return true;
         }
 
+        if self.has_column_winner(&parsed_logic_board) == true {
+            return true;
+        }
+
         false
     }
 
-    fn has_line_winner(&self, logic_board: &Vec<Vec<char>>) -> bool {
-        for line in logic_board {
-            if helpers::is_line_winner(line) == true {
+    fn has_line_winner(&self, parsed_logic_board: &Vec<Vec<char>>) -> bool {
+        for line in parsed_logic_board {
+            if helpers::is_vector_winner(line) == true {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn has_column_winner(&self, parsed_logic_board: &Vec<Vec<char>>) -> bool {
+        for i in 0..3 {
+            let mut column_in_line: Vec<char> = vec![];
+            for line in parsed_logic_board.iter() {
+                column_in_line.push(line.get(i).unwrap().clone());
+            }
+
+            if helpers::is_vector_winner(&column_in_line) == true {
                 return true;
             }
         }
@@ -93,7 +112,6 @@ fn main() {
         Player::new('✖', String::from("Player 2"))
     ];
 
-    let has_winner = false;
     let mut play_counter = 0;
 
     clear_terminal();
