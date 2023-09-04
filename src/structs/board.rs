@@ -1,44 +1,73 @@
+use std::{char::from_digit, ops::Range};
+use dyn_fmt::AsStrFormatExt;
+
 use crate::helpers::helpers;
 
 pub struct Board {
+    pub board: Vec<char>,
+    pub parsed_logic_board: Vec<Vec<char>>,
     pub visual_board: String,
-    pub logic_board: Vec<char>,
-    pub history: Vec<String>
+    pub history: Vec<String>,
+    board_template: String,
 }
 
 impl Board {
     pub fn new() -> Board {
-        let visual_board = r#"
-            | 1 | 2 | 3 |
-           --------------
-            | 4 | 5 | 6 |
-           ---------------
-            | 7 | 8 | 9 |
-        "#.to_string();
+        const POSSIBLE_PLAYS: Range<u32> = 1..10;
+        let mut board: Vec<char> = vec![];
+        for play in POSSIBLE_PLAYS{
+            board.push(from_digit(play, 10).unwrap());
+        }
 
-        let logic_board: Vec<char> = vec![' ';9];
+        let board_template = "
+            | {} | {} | {} |
+        -----------------
+            | {} | {} | {} |
+        -----------------
+            | {} | {} | {} |
+        ".to_string();
 
-        Board { visual_board, logic_board, history: vec![] }
+        let mut board = Board { board, parsed_logic_board: vec![vec![]], visual_board: String::new(), history: vec![], board_template };
+        
+        board.parsed_logic_board = board.parse_logic_board();
+        board.initiate_visual_board();
+
+        board
     }
 
-    pub fn update_visual_board(&mut self, user_play: char, new_symbol: char) {
-        self.history.push(self.visual_board.clone());
-        self.visual_board = self.visual_board.replace(&user_play.to_string(), &new_symbol.to_string());
+    fn initiate_visual_board(&mut self) {
+        let board = self.board_template.format(&self.board);
+
+        self.visual_board = board;
     }
 
-    pub fn update_logic_board(&mut self, user_play: char, new_symbol: char) {
+    pub fn update_board(&mut self, user_play: char, new_symbol: char) {
+        self.update_logic_board(user_play, new_symbol);
+        self.update_visual_board();
+    }
+
+    fn update_logic_board(&mut self, user_play: char, new_symbol: char) {
         let user_play_index = (user_play.to_digit(10).unwrap() - 1) as usize;
-        let logic_board_reference = self.logic_board.get_mut(user_play_index).unwrap();
+        let logic_board_reference = self.board.get_mut(user_play_index).unwrap();
         *logic_board_reference = new_symbol;
+    }
+
+    fn update_visual_board(&mut self) {
+        self.add_visual_board_history();
+
+        let board = self.board_template.format(&self.board);
+        self.visual_board = board;
+    }
+
+    fn add_visual_board_history(&mut self) {
+        self.history.push(self.visual_board.clone());
     }
 
     pub fn play_already_throwed(&mut self, user_play: char) -> bool {
         let user_play_index = (user_play.to_digit(10).unwrap() - 1) as usize;
-        if self.logic_board.get(user_play_index).unwrap().clone() != ' '{
-            return true;
-        }
-
-        false
+        let play_at_index = self.board.get(user_play_index).unwrap().clone();
+        
+        play_at_index == '⬤' || play_at_index == '✖'
     }
 
     pub fn has_winner(&self) -> bool {
@@ -112,7 +141,7 @@ impl Board {
     fn parse_logic_board(&self) -> Vec<Vec<char>> {
         let mut parsed_logic_board = vec![];
 
-        self.logic_board.chunks(3).for_each(|chunk| {
+        self.board.chunks(3).for_each(|chunk| {
             parsed_logic_board.push(chunk.to_vec())
         });
 

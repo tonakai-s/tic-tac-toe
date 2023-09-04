@@ -41,8 +41,7 @@ fn main() {
 
         current_player.previous_play = user_play;
 
-        board.update_visual_board(user_play, current_player.symbol);
-        board.update_logic_board(user_play, current_player.symbol);
+        board.update_board(user_play, current_player.symbol);
 
         println!("Board updated! ↓");
         println!("{}", board.visual_board);
