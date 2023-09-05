@@ -22,12 +22,12 @@ impl Game {
 
         let mut play_counter = 0;
 
-        println!("Board initiated! ↓");
+        println!("Board: ↓");
         println!("{}", self.board.visual_board);
 
         loop {
             let current_player: &mut Player = self.players.get_mut(play_counter % 2).unwrap();
-            println!("{} turn, with symbol: {}", current_player.name, current_player.symbol);
+            println!("\n{} turn, with symbol: {}", current_player.name, current_player.symbol);
 
             if current_player.previous_play != ' ' {
                 println!("{} previously throwed {}", current_player.name, current_player.previous_play);
@@ -50,7 +50,7 @@ impl Game {
 
             self.board.update_board(play, current_player.symbol);
 
-            println!("Board updated! ↓");
+            println!("Board: ↓");
             println!("{}", self.board.visual_board);
 
             if self.board.has_winner() == true {
