@@ -30,12 +30,12 @@ impl Board {
         let mut board = Board { board, parsed_logic_board: vec![vec![]], visual_board: String::new(), history: vec![], board_template };
         
         board.parsed_logic_board = board.parse_logic_board();
-        board.initiate_visual_board();
+        board.initialize_visual_board();
 
         board
     }
 
-    fn initiate_visual_board(&mut self) {
+    fn initialize_visual_board(&mut self) {
         let board = self.board_template.format(&self.board);
 
         self.visual_board = board;
