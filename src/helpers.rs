@@ -10,20 +10,4 @@ pub mod helpers {
 
         true
     }
-
-    // pub fn has_element<'a, T, U>(vector: Vec<T>, element: U) -> Option<bool>
-    // where T: PartialEq<U> {
-    //     let first_element = vector.get(0);
-    //     if first_element.is_none() {
-    //         return None;
-    //     }
-
-    //     for item in vector.iter() {
-    //         if *item.clone() == element {
-    //             return Some(true)
-    //         }
-    //     }
-
-    //     Some(false)
-    // }
 }

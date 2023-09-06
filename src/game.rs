@@ -2,7 +2,8 @@ use crate::structs::{player::Player, board::Board};
 
 pub struct Game {
     pub players: Vec<Player>,
-    pub board: Board
+    pub board: Board,
+    pub play_counter: usize
 }
 
 impl Game {
@@ -14,19 +15,19 @@ impl Game {
             Player::new('✖', String::from("Player 2"))
         ];
 
-        Game { players, board }
+        Game { players, board, play_counter: 0 }
     }
 
     pub fn run(&mut self) {
         Game::clear_terminal();
 
-        let mut play_counter = 0;
+        println!("Welcome to my tic-tac-toe game! (˵ ͡° ͜ʖ ͡°˵)");
 
         println!("Board: ↓");
         println!("{}", self.board.visual_board);
 
         loop {
-            let current_player: &mut Player = self.players.get_mut(play_counter % 2).unwrap();
+            let current_player: &mut Player = self.players.get_mut(self.play_counter % 2).unwrap();
             println!("\n{} turn, with symbol: {}", current_player.name, current_player.symbol);
 
             if current_player.previous_play != ' ' {
@@ -54,16 +55,16 @@ impl Game {
             println!("{}", self.board.visual_board);
 
             if self.board.has_winner() == true {
-                println!("Congratulations! {} is the winner!", current_player.name);
+                println!("Congratulations! {} is the winner! (ﾉ☉ヮ⚆)ﾉ ⌒*:･ﾟ✧", current_player.name);
                 break;
             }
 
-            if play_counter == 9 {
+            if self.play_counter == 9 {
                 println!("The match ended with a draw!");
                 break;
             }
 
-            play_counter += 1;
+            self.play_counter += 1;
         }
     }
 
