@@ -1,4 +1,3 @@
-use local_ip_address::local_ip;
 use ws::{connect, Handler, Handshake, Message, Result, Sender};
 
 pub struct Host {
@@ -9,7 +8,7 @@ pub struct Host {
 
 impl Handler for Host {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
-        println!("Connected to the server");
+        println!("Connected to the server!");
         Ok(())
     }
 
@@ -20,13 +19,11 @@ impl Handler for Host {
 }
 
 impl Host {
-    pub fn new(server: Sender) -> Host {
-        Host { symbol: '✖', name: String::from("host"), server }
+    fn new(server: Sender) -> Host {
+        Host { symbol: '✖', name: String::from("player1"), server }
     }
 
-    pub fn start() {
-        let server_url = format!("ws://{}:8081", local_ip().unwrap());
-
+    pub fn start(server_url: &str) {
         connect(server_url, |out| Host::new(out)).unwrap_or_else(|err| {
             eprintln!("Failed to connect to the server: {:?}", err);
         });
