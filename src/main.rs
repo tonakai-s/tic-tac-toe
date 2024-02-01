@@ -1,6 +1,6 @@
 use std::{process::exit, thread};
 use clap::{builder::PossibleValue, Arg, Command};
-use tic_tac_toe::{host::Host, server};
+use tic_tac_toe::{guest::Guest, host::Host, server};
 use local_ip_address::local_ip;
 
 fn main() {
@@ -27,7 +27,11 @@ fn main() {
     let mode = matches.get_one::<String>("mode").unwrap();
 
     if mode == "guest" {
-        println!("Just skiping because im a guest.");
+        let url = format!(
+            "ws://{}:8081",
+            matches.get_one::<String>("url").unwrap()
+        );
+        Guest::start(&url);
         exit(0);
     }
 
