@@ -9,4 +9,6 @@ edition = "2021"
 clap = { version = "4.4.2", features = ["derive"] }
 dyn-fmt = "0.4.0"
 local-ip-address = "0.5.4"
+serde = { version = "1.0.196", features = ["derive"] }
+serde_json = "1.0.113"
 ws = "0.9.2"

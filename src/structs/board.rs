@@ -3,6 +3,7 @@ use dyn_fmt::AsStrFormatExt;
 
 use crate::helpers::helpers;
 
+#[derive(Debug)]
 pub struct Board {
     pub board: Vec<char>,
     pub parsed_logic_board: Vec<Vec<char>>,

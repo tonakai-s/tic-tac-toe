@@ -6,6 +6,13 @@ use local_ip_address::local_ip;
 fn main() {
     let matches = Command::new("Tic Tac Toe")
         .arg(
+            Arg::new("nick")
+            .value_name("NICK")
+            .short('n')
+            .long("nick")
+            .required(true)
+        )
+        .arg(
             Arg::new("mode")
             .value_name("MODE")
             .short('m')
@@ -17,19 +24,20 @@ fn main() {
             .default_value("host")
         )
         .arg(
-            Arg::new("url")
-            .value_name("URL")
-            .short('u')
-            .long("url")
+            Arg::new("address")
+            .value_name("ADDRESS")
+            .short('a')
+            .long("addr")
             .required_if_eq("mode", "guest")
         ).get_matches();
 
     let mode = matches.get_one::<String>("mode").unwrap();
+    let nickname = matches.get_one::<String>("nick").unwrap();
 
     if mode == "guest" {
         let url = format!(
             "ws://{}:8081",
-            matches.get_one::<String>("url").unwrap()
+            matches.get_one::<String>("address").unwrap()
         );
         Guest::start(&url);
         exit(0);
@@ -40,7 +48,7 @@ fn main() {
     });
 
     let server_url = format!("ws://{}:8081", local_ip().unwrap());
-    Host::start(&server_url);
+    Host::start(&server_url, nickname);
 
     server_thread.join().unwrap();
 }
