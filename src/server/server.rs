@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use ws::{listen, Error, Handler, Handshake, Message, Response, Result, Sender};
 
+use crate::structs::board::Board;
+
 use super::{game::Game, game_state::GameState};
 
 #[derive(Debug)]
@@ -22,7 +24,8 @@ impl Handler for TicTacToeHandler {
                     "content": format!("Hello {}, the server has been successfully created.\nWe are waiting the Player2 (Guest) connect...", join_message.nickname)
                 }).to_string();
                 self.out.send(Message::text(json)).unwrap();
-                self.clients.borrow_mut().push(Client::new(join_message.mode.clone(), join_message.nickname, self.out.clone()));
+                self.clients.borrow_mut().push(Client::new(join_message.mode.clone(), join_message.nickname.clone(), self.out.clone()));
+                self.game_state.borrow_mut().possible_players.push(join_message.nickname);
             } else if join_message.mode == "guest" {
                 let guest_already_set = self.clients.borrow().iter().any(|client| client.mode == "guest");
                 if guest_already_set == false {
@@ -30,9 +33,10 @@ impl Handler for TicTacToeHandler {
                         "content": format!("Hello {}, you has been connected successfully to the server.\nWe are initiating the game...", join_message.nickname)
                     }).to_string();
                     self.out.send(json).unwrap();
-                    self.clients.borrow_mut().push(Client::new(join_message.mode, join_message.nickname, self.out.clone()));
+                    self.clients.borrow_mut().push(Client::new(join_message.mode, join_message.nickname.clone(), self.out.clone()));
+                    self.game_state.borrow_mut().possible_players.push(join_message.nickname);
                     self.send_to_host("The Player 2 has been connected, initiating the game...");
-                    self.initialize_state();
+                    self.game_state.borrow_mut().define_initial_playable_state();
                     self.propagate_start();
                 } else {
                     // TODO: Send a message
@@ -44,10 +48,20 @@ impl Handler for TicTacToeHandler {
             return Ok(());
         }
 
+        // TODO: Where validate if the position is valid???????
+        if let Ok(play) = serde_json::from_str::<Play>(&msg.to_string()) {
+            self.game_state.borrow_mut().update_state(play.position, play.symbol);
+            
+            let new_state = json!({
+                "turn_nickname": self.game_state.borrow().player_turn,
+                "visual_board": self.game_state.borrow().board.visual_board
+            }).to_string();
+    
+            self.broadcast(Message::text(new_state));
+            return Ok(())
+        }
 
         // TODO: Send to the client who play in the turn, and leave the handle to them...
-
-        // println!("{:#?}", self.clients);
         Ok(())
     }
 
@@ -66,18 +80,21 @@ impl TicTacToeHandler {
         self.clients.borrow().get(0).unwrap().out.send(Message::text(json)).unwrap();
     }
 
-    fn initialize_state(&self) {
-        *self.game_state.borrow_mut() = Some(GameState::new());
-    }
-
     fn propagate_start(&self) {
-        let start_message = format!("Welcome to my tic-tac-toe game! (˵ ͡° ͜ʖ ͡°˵)\nInitial board: ↓\n{}", self.game_state.borrow().as_ref().unwrap().board.visual_board.as_str());
+        let start_message = format!("Welcome to my tic-tac-toe game! (˵ ͡° ͜ʖ ͡°˵)");
 
         let json = json!({
             "content": start_message
         }).to_string();
 
         self.broadcast(Message::text(json));
+
+        let start_state = json!({
+            "turn_nickname": self.game_state.borrow().player_turn,
+            "visual_board": self.game_state.borrow().board.visual_board
+        }).to_string();
+
+        self.broadcast(Message::text(start_state));
     }
 
     fn broadcast(&self, msg: Message) {
@@ -114,11 +131,11 @@ impl Client {
     }
 }
 
-type State = Rc<RefCell<Option<GameState>>>;
+type State = Rc<RefCell<GameState>>;
 type Clients = Rc<RefCell<Vec<Client>>>;
 
 pub fn start() {
-    let game_state: State = State::new(RefCell::new(None));
+    let game_state: State = State::new(RefCell::new(GameState::new()));
     let clients: Clients = Clients::new(RefCell::new(vec![]));
 
     let local_address = local_ip().unwrap().to_string();

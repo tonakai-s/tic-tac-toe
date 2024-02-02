@@ -42,14 +42,14 @@ impl Board {
         self.visual_board = board;
     }
 
-    pub fn update_board(&mut self, user_play: char, new_symbol: char) {
+    pub fn update_board(&mut self, user_play: u8, new_symbol: char) {
         self.update_logic_board(user_play, new_symbol);
         self.update_visual_board();
     }
 
-    fn update_logic_board(&mut self, user_play: char, new_symbol: char) {
-        let user_play_index = (user_play.to_digit(10).unwrap() - 1) as usize;
-        let logic_board_reference = self.board.get_mut(user_play_index).unwrap();
+    fn update_logic_board(&mut self, user_play: u8, new_symbol: char) {
+        // let user_play_index = (user_play.to_digit(10).unwrap() - 1) as usize;
+        let logic_board_reference = self.board.get_mut((user_play - 1) as usize).unwrap();
         *logic_board_reference = new_symbol;
     }
 

@@ -39,7 +39,7 @@ fn main() {
             "ws://{}:8081",
             matches.get_one::<String>("address").unwrap()
         );
-        Guest::start(&url);
+        Guest::start(&url, &nickname);
         exit(0);
     }
 

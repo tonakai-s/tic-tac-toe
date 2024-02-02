@@ -49,7 +49,7 @@ impl Game {
 
             current_player.previous_play = play;
 
-            self.board.update_board(play, current_player.symbol);
+            // self.board.update_board(play, current_player.symbol);
 
             println!("Board: ↓");
             println!("{}", self.board.visual_board);
