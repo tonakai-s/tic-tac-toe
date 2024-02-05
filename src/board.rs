@@ -1,7 +1,5 @@
 use dyn_fmt::AsStrFormatExt;
 
-use crate::helpers::helpers;
-
 #[derive(Debug)]
 pub struct Board {
     pub board: Vec<char>,
@@ -89,7 +87,7 @@ impl Board {
 
     fn has_line_winner(&self, parsed_logic_board: &Vec<Vec<char>>) -> bool {
         for line in parsed_logic_board {
-            if helpers::is_vector_winner(line) == true {
+            if self.is_vector_winner(line) == true {
                 return true;
             }
         }
@@ -104,7 +102,7 @@ impl Board {
                 column_in_line.push(line.get(i).unwrap().clone());
             }
 
-            if helpers::is_vector_winner(&column_in_line) == true {
+            if self.is_vector_winner(&column_in_line) == true {
                 return true;
             }
         }
@@ -121,7 +119,7 @@ impl Board {
             incremented_index += 1;
         }
 
-        if helpers::is_vector_winner(&diagonal_in_line) == true {
+        if self.is_vector_winner(&diagonal_in_line) == true {
             return true;
         }
 
@@ -131,14 +129,14 @@ impl Board {
             diagonal_in_line.push(line.get(decremented_index - i).unwrap().clone());
         }
 
-        if helpers::is_vector_winner(&diagonal_in_line) == true {
+        if self.is_vector_winner(&diagonal_in_line) == true {
             return true;
         }
 
         false
     }
 
-    pub fn is_vector_winner(vector: &Vec<char>) -> bool {
+    fn is_vector_winner(&self, vector: &Vec<char>) -> bool {
         let first_element = vector.get(0).unwrap();
 
         for item in vector.iter() {
