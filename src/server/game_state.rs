@@ -1,4 +1,4 @@
-use crate::structs::board::Board;
+use crate::board::Board;
 
 // TODO: Study more about lifetimes
 #[derive(Debug)]
@@ -25,9 +25,11 @@ impl GameState {
         self.player_turn = self.possible_players.get((self.turn % 2) as usize).unwrap().clone();
     }
 
-    pub fn update_state(&mut self, position: u8, symbol: char) {
-        self.board.update_board(position, symbol);
+    pub fn update_state(&mut self, position: u8, symbol: char) -> Result<(), String> {
+        self.board.update_board(position, symbol)?;
         self.turn += 1;
         self.player_turn = self.possible_players.get( (self.turn % 2) as usize ).unwrap().to_string();
+
+        Ok(())
     }
 }

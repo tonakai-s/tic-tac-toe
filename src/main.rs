@@ -1,6 +1,6 @@
 use std::{process::exit, thread};
 use clap::{builder::PossibleValue, Arg, Command};
-use tic_tac_toe::{guest::Guest, host::Host, server};
+use tic_tac_toe::{client::Client, server};
 use local_ip_address::local_ip;
 
 fn main() {
@@ -10,6 +10,7 @@ fn main() {
             .value_name("NICK")
             .short('n')
             .long("nick")
+            .help("Defines your user on the game.")
             .required(true)
         )
         .arg(
@@ -28,6 +29,7 @@ fn main() {
             .value_name("ADDRESS")
             .short('a')
             .long("addr")
+            .help("Set the server host to connect.")
             .required_if_eq("mode", "guest")
         ).get_matches();
 
@@ -39,7 +41,7 @@ fn main() {
             "ws://{}:8081",
             matches.get_one::<String>("address").unwrap()
         );
-        Guest::start(&url, &nickname);
+        Client::start(&url, Some('⬤'), "guest", &nickname);
         exit(0);
     }
 
@@ -48,7 +50,7 @@ fn main() {
     });
 
     let server_url = format!("ws://{}:8081", local_ip().unwrap());
-    Host::start(&server_url, nickname);
+    Client::start(&server_url, Some('✖'), "host", nickname);
 
     server_thread.join().unwrap();
 }

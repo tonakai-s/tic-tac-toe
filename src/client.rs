@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use ws::{connect, Handler, Handshake, Message, Result, Sender};
 
-pub struct Guest {
+pub struct Client {
     server: Sender,
-    symbol: char,
+    symbol: Option<char>,
     mode: String,
     nickname: String
 }
@@ -35,7 +35,7 @@ struct Winner {
     visual_board: String
 }
 
-impl Handler for Guest {
+impl Handler for Client {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
         let join_data = json!({
             "mode": self.mode,
@@ -99,13 +99,13 @@ impl Handler for Guest {
     }
 }
 
-impl Guest {
-    pub fn new(server: Sender, nickname: String) -> Guest {
-        Guest { symbol: '⬤', mode: String::from("guest"), server, nickname }
+impl Client {
+    pub fn new(server: Sender, symbol: Option<char>, mode: String, nickname: String, ) -> Self {
+        Client { server, symbol, mode, nickname }
     }
 
-    pub fn start(server_url: &str, nickname: &str) {
-        connect(server_url, |out| Guest::new(out, nickname.to_string())).unwrap_or_else(|err| {
+    pub fn start(server_url: &str, symbol: Option<char>, mode: &str, nickname: &str) {
+        connect(server_url, |out| Client::new(out, symbol, mode.to_string(), nickname.to_string())).unwrap_or_else(|err| {
             eprintln!("Failed to connect to the server: {:?}", err);
         });
     }
@@ -118,7 +118,7 @@ impl Guest {
 
     pub fn ask_for_play(&self) -> u8 {
         loop {
-            print!("Your symbol is {}, select a position: ", self.symbol);
+            print!("Your symbol is {}, select a position: ", self.symbol.unwrap());
             let _ = io::stdout().flush();
             let mut position = String::new();
             io::stdin().read_line(&mut position).unwrap();

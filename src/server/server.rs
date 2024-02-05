@@ -1,12 +1,10 @@
-use std::{cell::{Ref, RefCell}, rc::Rc, sync::Mutex};
+use std::{cell::RefCell, rc::Rc};
 use local_ip_address::local_ip;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use ws::{listen, Error, Handler, Handshake, Message, Response, Result, Sender};
+use ws::{listen, Handler, Message, Result, Sender};
 
-use crate::structs::board::Board;
-
-use super::{game::Game, game_state::GameState};
+use super::game_state::GameState;
 
 #[derive(Debug)]
 struct TicTacToeHandler {
@@ -48,9 +46,29 @@ impl Handler for TicTacToeHandler {
             return Ok(());
         }
 
-        // TODO: Where validate if the position is valid???????
         if let Ok(play) = serde_json::from_str::<Play>(&msg.to_string()) {
-            self.game_state.borrow_mut().update_state(play.position, play.symbol);
+            if let Err(error) = self.game_state.borrow_mut().update_state(play.position, play.symbol) {
+                let error_state = json!({
+                    "nickname": play.nickname,
+                    "player_error": error,
+                    "others_error": error
+                }).to_string();
+
+                self.broadcast(Message::text(error_state));
+
+                return Ok(());
+            };
+
+            if self.game_state.borrow().board.has_winner() == true {
+                let winner_state = json!({
+                    "winner": play.nickname,
+                    "visual_board": self.game_state.borrow().board.visual_board
+                }).to_string();
+
+                self.broadcast(Message::text(winner_state));
+
+                return Ok(());
+            }
             
             let new_state = json!({
                 "turn_nickname": self.game_state.borrow().player_turn,
@@ -61,7 +79,6 @@ impl Handler for TicTacToeHandler {
             return Ok(())
         }
 
-        // TODO: Send to the client who play in the turn, and leave the handle to them...
         Ok(())
     }
 
@@ -71,7 +88,7 @@ impl Handler for TicTacToeHandler {
     // }
 }
 
-// TODO: Be able to send a command to the client
+// TODO: Be able to send a command to the client??
 impl TicTacToeHandler {
     fn send_to_host(&self, msg: &str) {
         let json = json!({
@@ -139,10 +156,12 @@ pub fn start() {
     let clients: Clients = Clients::new(RefCell::new(vec![]));
 
     let local_address = local_ip().unwrap().to_string();
-    println!("My addr: {}", local_ip().unwrap());
     listen(format!("{local_address}:8081"), |out| TicTacToeHandler {
             game_state: game_state.clone(),
             clients: clients.clone(),
             out
     }).unwrap();
+
+    println!("Access the game using these arguments to join as Guest:");
+    println!("--mode=guest --addr={} --nick=NICKNAME", local_address);
 }

@@ -1,4 +1,3 @@
-use std::{char::from_digit, ops::Range};
 use dyn_fmt::AsStrFormatExt;
 
 use crate::helpers::helpers;
@@ -14,12 +13,6 @@ pub struct Board {
 
 impl Board {
     pub fn new() -> Board {
-        const POSSIBLE_PLAYS: Range<u32> = 1..10;
-        let mut board: Vec<char> = vec![];
-        for play in POSSIBLE_PLAYS{
-            board.push(from_digit(play, 10).unwrap());
-        }
-
         let board_template = "
             | {} | {} | {} |
           -----------------
@@ -28,7 +21,7 @@ impl Board {
             | {} | {} | {} |
         ".to_string();
 
-        let mut board = Board { board, parsed_logic_board: vec![vec![]], visual_board: String::new(), history: vec![], board_template };
+        let mut board = Board { board: vec![' '; 9], parsed_logic_board: vec![vec![]], visual_board: String::new(), history: vec![], board_template };
         
         board.parsed_logic_board = board.parse_logic_board();
         board.initialize_visual_board();
@@ -42,13 +35,25 @@ impl Board {
         self.visual_board = board;
     }
 
-    pub fn update_board(&mut self, user_play: u8, new_symbol: char) {
+    pub fn update_board(&mut self, user_play: u8, new_symbol: char) -> Result<(), String> {
+        if self.play_already_throwed(user_play) {
+            return Err(format!("Position {} is invalid!", user_play));
+        }
+
         self.update_logic_board(user_play, new_symbol);
         self.update_visual_board();
+
+        Ok(())
+    }
+
+    pub fn play_already_throwed(&mut self, user_play: u8) -> bool {
+        let user_play_index = (user_play - 1) as usize;
+        let play_at_index = self.board.get(user_play_index).unwrap().clone();
+        
+        play_at_index == '⬤' || play_at_index == '✖'
     }
 
     fn update_logic_board(&mut self, user_play: u8, new_symbol: char) {
-        // let user_play_index = (user_play.to_digit(10).unwrap() - 1) as usize;
         let logic_board_reference = self.board.get_mut((user_play - 1) as usize).unwrap();
         *logic_board_reference = new_symbol;
     }
@@ -60,15 +65,9 @@ impl Board {
         self.visual_board = board;
     }
 
+    // TODO: Needed?
     fn add_visual_board_history(&mut self) {
         self.history.push(self.visual_board.clone());
-    }
-
-    pub fn play_already_throwed(&mut self, user_play: char) -> bool {
-        let user_play_index = (user_play.to_digit(10).unwrap() - 1) as usize;
-        let play_at_index = self.board.get(user_play_index).unwrap().clone();
-        
-        play_at_index == '⬤' || play_at_index == '✖'
     }
 
     pub fn has_winner(&self) -> bool {
