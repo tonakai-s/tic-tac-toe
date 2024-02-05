@@ -41,7 +41,7 @@ fn main() {
             "ws://{}:8081",
             matches.get_one::<String>("address").unwrap()
         );
-        Client::start(&url, Some('⬤'), "guest", &nickname);
+        Client::start(&url, Some('⬤'), "guest", nickname);
         exit(0);
     }
 

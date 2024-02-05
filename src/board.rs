@@ -43,7 +43,7 @@ impl Board {
     }
 
     pub fn play_already_throwed(&mut self, user_play: u8) -> bool {
-        let play_at_index = self.board.get((user_play - 1) as usize).unwrap().clone();
+        let play_at_index = *self.board.get((user_play - 1) as usize).unwrap();
         
         play_at_index == '⬤' || play_at_index == '✖'
     }
@@ -61,15 +61,15 @@ impl Board {
     }
 
     pub fn has_winner(&self) -> bool {
-        if self.has_line_winner() == true {
+        if self.has_line_winner() {
             return true;
         }
 
-        if self.has_column_winner() == true {
+        if self.has_column_winner() {
             return true;
         }
 
-        if self.has_diagonal_winner() == true {
+        if self.has_diagonal_winner() {
             return true;
         }
 
@@ -78,7 +78,7 @@ impl Board {
 
     fn has_line_winner(&self) -> bool {
         for line in self.parsed_logic_board.as_ref().unwrap() {
-            if self.is_vector_winner(&line) == true {
+            if self.is_vector_winner(line) {
                 return true;
             }
         }
@@ -90,10 +90,10 @@ impl Board {
         for i in 0..3 {
             let mut column_in_line: Vec<char> = vec![];
             for line in self.parsed_logic_board.as_ref().unwrap().iter() {
-                column_in_line.push(line.get(i).unwrap().clone());
+                column_in_line.push(*line.get(i).unwrap());
             }
 
-            if self.is_vector_winner(&column_in_line) == true {
+            if self.is_vector_winner(&column_in_line) {
                 return true;
             }
         }
@@ -103,32 +103,30 @@ impl Board {
 
     fn has_diagonal_winner(&self) -> bool {
         let mut diagonal_in_line: Vec<char> = vec![];
-        let mut incremented_index = 0;
 
-        for line in self.parsed_logic_board.as_ref().unwrap().iter() {
-            diagonal_in_line.push(line.get(incremented_index).unwrap().clone());
-            incremented_index += 1;
+        for (index, line) in self.parsed_logic_board.as_ref().unwrap().iter().enumerate() {
+            diagonal_in_line.push(*line.get(index).unwrap());
         }
 
-        if self.is_vector_winner(&diagonal_in_line) == true {
+        if self.is_vector_winner(&diagonal_in_line) {
             return true;
         }
 
         diagonal_in_line.clear();
         let decremented_index = 2;
         for (i, line) in self.parsed_logic_board.as_ref().unwrap().iter().enumerate() {
-            diagonal_in_line.push(line.get(decremented_index - i).unwrap().clone());
+            diagonal_in_line.push(*line.get(decremented_index - i).unwrap());
         }
 
-        if self.is_vector_winner(&diagonal_in_line) == true {
+        if self.is_vector_winner(&diagonal_in_line) {
             return true;
         }
 
         false
     }
 
-    fn is_vector_winner(&self, vector: &Vec<char>) -> bool {
-        let first_element = vector.get(0).unwrap();
+    fn is_vector_winner(&self, vector: &[char]) -> bool {
+        let first_element = vector.first().unwrap();
 
         for item in vector.iter() {
             if ( *item != *first_element ) || *item == ' ' {

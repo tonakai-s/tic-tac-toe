@@ -138,7 +138,7 @@ impl Client {
             position = position.trim().to_string();
 
             if let Ok(position) = position.parse::<u8>() {
-                if Vec::from_iter(1..10).contains(&position) == false {
+                if !Vec::from_iter(1..10).contains(&position) {
                     println!("(ง •̀_•́)ง '{position}' is not a valid input, type only a number between or equal 1 and 9.");
                     continue;
                 }

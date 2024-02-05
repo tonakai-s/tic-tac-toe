@@ -68,7 +68,7 @@ impl Handler for TicTacToeHandler {
                 self.game_state.borrow_mut().possible_players.push(join_message.nickname);
             } else if join_message.mode == "guest" {
                 let guest_already_set = self.clients.borrow().iter().any(|client| client.mode == "guest");
-                if guest_already_set == false {
+                if !guest_already_set {
                     let json = json!({
                         "content": format!("Hello {}, you has been connected successfully to the server.\nWe are initiating the game...", join_message.nickname)
                     }).to_string();
@@ -100,7 +100,7 @@ impl Handler for TicTacToeHandler {
                 return Ok(());
             };
 
-            if self.game_state.borrow().board.has_winner() == true {
+            if self.game_state.borrow().board.has_winner() {
                 let winner_state = json!({
                     "winner": play.nickname,
                     "visual_board": self.game_state.borrow().board.visual_board
@@ -136,11 +136,11 @@ impl TicTacToeHandler {
         let json = json!({
             "content": msg
         }).to_string();
-        self.clients.borrow().get(0).unwrap().out.send(Message::text(json)).unwrap();
+        self.clients.borrow().first().unwrap().out.send(Message::text(json)).unwrap();
     }
 
     fn propagate_start(&self) {
-        let start_message = format!("Welcome to my tic-tac-toe game! (˵ ͡° ͜ʖ ͡°˵)");
+        let start_message = String::from("Welcome to my tic-tac-toe game! (˵ ͡° ͜ʖ ͡°˵)");
 
         let json = json!({
             "content": start_message
