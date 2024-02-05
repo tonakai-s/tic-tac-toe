@@ -10,8 +10,7 @@ pub fn start() {
     let game_state: State = State::new(RefCell::new(GameState::new()));
     // TODO: Players and Specs go to the same Vector?
     let clients: Clients = Clients::new(RefCell::new(vec![]));
-
-    let local_address = local_ip().unwrap().to_string();
+    let local_address = local_ip().unwrap();
     listen(format!("{local_address}:8081"), |out| TicTacToeHandler {
             game_state: game_state.clone(),
             clients: clients.clone(),
@@ -61,7 +60,7 @@ impl Handler for TicTacToeHandler {
             match join_message.mode.as_str() {
                 "host" => {
                     let json = json!({
-                        "content": format!("Hello {}, the server has been successfully created.\nWe are waiting the Player2 (Guest) connect...", join_message.nickname)
+                        "content": format!("(ᕗ ͠° ਊ ͠° )ᕗ Hello {}, the server has been successfully created.\nʕ·͡ᴥ·ʔ We are waiting the Player2 (Guest) connect...\n⊂(◉‿◉)つ To access as a guest, call with these arguments '--mode=guest --nick=NICKNAME --addr={}'", join_message.nickname, local_ip().unwrap())
                     }).to_string();
                     self.out.send(Message::text(json)).unwrap();
                     self.clients.borrow_mut().push(Client::new(join_message.mode.clone(), join_message.nickname.clone(), self.out.clone()));

@@ -49,7 +49,8 @@ fn main() {
         server::start();
     });
 
-    let server_url = format!("ws://{}:8081", local_ip().unwrap());
+    let local_addr = local_ip().unwrap();
+    let server_url = format!("ws://{}:8081", local_addr);
     Client::start(&server_url, Some('✖'), "host", nickname);
 
     server_thread.join().unwrap();
