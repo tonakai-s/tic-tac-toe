@@ -51,6 +51,7 @@ fn main() {
 
     let local_addr = local_ip().unwrap();
     let server_url = format!("ws://{}:8081", local_addr);
+    // TODO: Sometimes this connection failes, why???
     Client::start(&server_url, Some('✖'), "host", nickname);
 
     server_thread.join().unwrap();
