@@ -6,6 +6,19 @@ use ws::{listen, Handler, Message, Result, Sender};
 
 use super::game_state::GameState;
 
+pub fn start() {
+    let game_state: State = State::new(RefCell::new(GameState::new()));
+    // TODO: Players and Specs go to the same Vector?
+    let clients: Clients = Clients::new(RefCell::new(vec![]));
+
+    let local_address = local_ip().unwrap().to_string();
+    listen(format!("{local_address}:8081"), |out| TicTacToeHandler {
+            game_state: game_state.clone(),
+            clients: clients.clone(),
+            out
+    }).unwrap();
+}
+
 #[derive(Debug)]
 struct TicTacToeHandler {
     game_state: State,
@@ -149,17 +162,4 @@ impl TicTacToeHandler {
             client.out.send(msg.clone()).unwrap();
         }
     }
-}
-
-pub fn start() {
-    let game_state: State = State::new(RefCell::new(GameState::new()));
-    // TODO: Players and Specs go to the same Vector?
-    let clients: Clients = Clients::new(RefCell::new(vec![]));
-
-    let local_address = local_ip().unwrap().to_string();
-    listen(format!("{local_address}:8081"), |out| TicTacToeHandler {
-            game_state: game_state.clone(),
-            clients: clients.clone(),
-            out
-    }).unwrap();
 }

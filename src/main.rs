@@ -46,7 +46,7 @@ fn main() {
     }
 
     let server_thread = thread::spawn(move || {
-        server::server::start();
+        server::start();
     });
 
     let server_url = format!("ws://{}:8081", local_ip().unwrap());
