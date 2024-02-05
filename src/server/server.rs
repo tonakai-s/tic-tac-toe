@@ -13,6 +13,35 @@ struct TicTacToeHandler {
     out: Sender
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct Play {
+    nickname: String,
+    position: u8,
+    symbol: char
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct JoinMessage {
+    mode: String,
+    nickname: String
+}
+
+#[derive(PartialEq, Debug)]
+pub struct Client {
+    mode: String,
+    nickname: String,
+    out: Sender
+}
+
+impl Client {
+    fn new(mode: String, nickname: String, out: Sender) -> Self {
+        Client { mode, nickname, out }
+    }
+}
+
+type State = Rc<RefCell<GameState>>;
+type Clients = Rc<RefCell<Vec<Client>>>;
+
 impl Handler for TicTacToeHandler {
     fn on_message(&mut self, msg: Message) -> Result<()> {
         if let Ok(join_message) = serde_json::from_str::<JoinMessage>(&msg.to_string()) {
@@ -37,7 +66,6 @@ impl Handler for TicTacToeHandler {
                     self.game_state.borrow_mut().define_initial_playable_state();
                     self.propagate_start();
                 } else {
-                    // TODO: Send a message
                     self.out.close(ws::CloseCode::Normal).unwrap();
                 }
             } else {
@@ -50,8 +78,8 @@ impl Handler for TicTacToeHandler {
             if let Err(error) = self.game_state.borrow_mut().update_state(play.position, play.symbol) {
                 let error_state = json!({
                     "nickname": play.nickname,
-                    "player_error": error,
-                    "others_error": error
+                    "player_error": format!("(ง •̀_•́)ง {}", error),
+                    "others_error": format!("{} inserted a in use position! Still waiting... (❍ᴥ❍ʋ)", play.nickname)
                 }).to_string();
 
                 self.broadcast(Message::text(error_state));
@@ -83,6 +111,7 @@ impl Handler for TicTacToeHandler {
     }
 
     // TODO: Remove client when closed connection
+    // TODO: Close all connections when Host close the connection
     // fn on_close(&mut self, code: ws::CloseCode, reason: &str) {
         
     // }
@@ -122,37 +151,9 @@ impl TicTacToeHandler {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Play {
-    nickname: String,
-    position: u8,
-    symbol: char
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct JoinMessage {
-    mode: String,
-    nickname: String
-}
-
-#[derive(PartialEq, Debug)]
-pub struct Client {
-    mode: String,
-    nickname: String,
-    out: Sender
-}
-
-impl Client {
-    fn new(mode: String, nickname: String, out: Sender) -> Self {
-        Client { mode, nickname, out }
-    }
-}
-
-type State = Rc<RefCell<GameState>>;
-type Clients = Rc<RefCell<Vec<Client>>>;
-
 pub fn start() {
     let game_state: State = State::new(RefCell::new(GameState::new()));
+    // TODO: Players and Specs go to the same Vector?
     let clients: Clients = Clients::new(RefCell::new(vec![]));
 
     let local_address = local_ip().unwrap().to_string();
@@ -161,7 +162,4 @@ pub fn start() {
             clients: clients.clone(),
             out
     }).unwrap();
-
-    println!("Access the game using these arguments to join as Guest:");
-    println!("--mode=guest --addr={} --nick=NICKNAME", local_address);
 }

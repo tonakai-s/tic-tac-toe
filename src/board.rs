@@ -33,7 +33,7 @@ impl Board {
 
     pub fn update_board(&mut self, user_play: u8, new_symbol: char) -> Result<(), String> {
         if self.play_already_throwed(user_play) {
-            return Err(format!("Position {} is invalid!", user_play));
+            return Err(format!("Position {} is already in use!", user_play));
         }
 
         self.update_logic_board(user_play, new_symbol);
@@ -77,7 +77,6 @@ impl Board {
     }
 
     fn has_line_winner(&self) -> bool {
-        println!("HAS LINE WINNER?");
         for line in self.parsed_logic_board.as_ref().unwrap() {
             if self.is_vector_winner(&line) == true {
                 return true;
