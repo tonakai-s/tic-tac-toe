@@ -58,32 +58,34 @@ type Clients = Rc<RefCell<Vec<Client>>>;
 impl Handler for TicTacToeHandler {
     fn on_message(&mut self, msg: Message) -> Result<()> {
         if let Ok(join_message) = serde_json::from_str::<JoinMessage>(&msg.to_string()) {
-            // TODO: Refactor
-            if join_message.mode == "host" {
-                let json = json!({
-                    "content": format!("Hello {}, the server has been successfully created.\nWe are waiting the Player2 (Guest) connect...", join_message.nickname)
-                }).to_string();
-                self.out.send(Message::text(json)).unwrap();
-                self.clients.borrow_mut().push(Client::new(join_message.mode.clone(), join_message.nickname.clone(), self.out.clone()));
-                self.game_state.borrow_mut().possible_players.push(join_message.nickname);
-            } else if join_message.mode == "guest" {
-                let guest_already_set = self.clients.borrow().iter().any(|client| client.mode == "guest");
-                if !guest_already_set {
+            match join_message.mode.as_str() {
+                "host" => {
                     let json = json!({
-                        "content": format!("Hello {}, you has been connected successfully to the server.\nWe are initiating the game...", join_message.nickname)
+                        "content": format!("Hello {}, the server has been successfully created.\nWe are waiting the Player2 (Guest) connect...", join_message.nickname)
                     }).to_string();
-                    self.out.send(json).unwrap();
-                    self.clients.borrow_mut().push(Client::new(join_message.mode, join_message.nickname.clone(), self.out.clone()));
+                    self.out.send(Message::text(json)).unwrap();
+                    self.clients.borrow_mut().push(Client::new(join_message.mode.clone(), join_message.nickname.clone(), self.out.clone()));
                     self.game_state.borrow_mut().possible_players.push(join_message.nickname);
-                    self.send_to_host("The Player 2 has been connected, initiating the game...");
-                    self.game_state.borrow_mut().define_initial_playable_state();
-                    self.propagate_start();
-                } else {
-                    self.out.close(ws::CloseCode::Normal).unwrap();
-                }
-            } else {
-                self.clients.borrow_mut().push(Client::new(join_message.mode, join_message.nickname, self.out.clone()));
+                },
+                "guest" => {
+                    let guest_already_set = self.clients.borrow().iter().any(|client| client.mode == "guest");
+                    if !guest_already_set {
+                        let json = json!({
+                            "content": format!("Hello {}, you has been connected successfully to the server.\nWe are initiating the game...", join_message.nickname)
+                        }).to_string();
+                        self.out.send(json).unwrap();
+                        self.clients.borrow_mut().push(Client::new(join_message.mode, join_message.nickname.clone(), self.out.clone()));
+                        self.game_state.borrow_mut().possible_players.push(join_message.nickname);
+                        self.send_to_host("The Player 2 has been connected, initiating the game...");
+                        self.game_state.borrow_mut().define_initial_playable_state();
+                        self.propagate_start();
+                    } else {
+                        self.out.close_with_reason(ws::CloseCode::Normal, "The game already have a Guest.").unwrap();
+                    }
+                },
+                _ => self.clients.borrow_mut().push(Client::new(join_message.mode, join_message.nickname, self.out.clone()))
             }
+
             return Ok(());
         }
 

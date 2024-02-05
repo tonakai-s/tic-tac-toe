@@ -46,6 +46,10 @@ impl Handler for Client {
         Ok(())
     }
 
+    fn on_close(&mut self, _: ws::CloseCode, reason: &str) {
+        println!("(⌐■_■) Your connection has been closed by the server because of: {}", reason);
+    }
+
     fn on_message(&mut self, msg: Message) -> Result<()> {
         if let Ok(error) = serde_json::from_str::<ErrorState>(&msg.to_string()) {
             if error.nickname == self.nickname {
