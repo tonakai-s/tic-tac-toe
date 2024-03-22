@@ -1,6 +1,6 @@
 # tic-tac-toe
 
-This is a simple tic-tac-toe game to run on terminal and play with another person on the same computer.
+This is a simple tic-tac-toe game to run on terminal and play with another person on the same computer or the same network (LAN).
 
 ## Purpose
 
