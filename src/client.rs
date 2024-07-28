@@ -92,6 +92,7 @@ impl Handler for Client {
 
                 self.server.send(play_json).unwrap();
             } else {
+                // TODO: Block input, because it's updating the game state
                 println!("It's {} turn, waiting a play... (❍ᴥ❍ʋ)", new_state.turn_nickname);
             }
 
