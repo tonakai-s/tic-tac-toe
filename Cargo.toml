@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.4.2", features = ["derive"] }
+ctrlc = "3.4.5"
 dyn-fmt = "0.4.0"
 local-ip-address = "0.5.4"
 serde = { version = "1.0.196", features = ["derive"] }

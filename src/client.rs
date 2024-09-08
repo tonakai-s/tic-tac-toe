@@ -1,8 +1,21 @@
 use std::io::{self, Write};
-
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use ws::{connect, Handler, Handshake, Message, Result, Sender};
+
+#[derive(Serialize, Deserialize)]
+pub enum ServerState {
+    Error { player: String, message: String },
+    Info { message: String },
+    New { curr_player: String, board: String},
+    Winner { player: String, board: String },
+    Draw { message: String, board: String }
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum ClientState<'a> {
+    Join { mode: &'a str, nickname: &'a str },
+    Play { nickname: &'a str, position: u8, symbol: char }
+}
 
 pub struct Client {
     server: Sender,
@@ -11,38 +24,16 @@ pub struct Client {
     nickname: String
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct CommonInfo {
-    content: String
-}
-
-#[derive(Deserialize, Serialize)]
-struct NewGameState {
-    turn_nickname: String,
-    visual_board: String,
-}
-
-#[derive(Deserialize, Serialize)]
-struct ErrorState {
-    nickname: String,
-    player_error: String,
-    others_error: String
-}
-
-#[derive(Deserialize, Serialize)]
-struct Winner {
-    winner: String,
-    visual_board: String
-}
-
 impl Handler for Client {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
-        let join_data = json!({
-            "mode": self.mode,
-            "nickname": self.nickname,
-        }).to_string();
+        let join = ClientState::Join { mode: &self.mode, nickname: &self.nickname };
+        
+        self.server.send(
+            Message::text(
+            serde_json::to_string(&join).expect("Unable to mount the join message.")
+            )
+        ).unwrap();
 
-        self.server.send(Message::text(join_data)).unwrap();
         Ok(())
     }
 
@@ -51,69 +42,63 @@ impl Handler for Client {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<()> {
-        if let Ok(error) = serde_json::from_str::<ErrorState>(&msg.to_string()) {
-            if error.nickname == self.nickname {
-                println!("{}", error.player_error);
-                let position = self.ask_for_play();
-                let play_json = json!({
-                    "nickname": self.nickname,
-                    "position": position,
-                    "symbol": self.symbol
-                }).to_string();
-
-                self.server.send(play_json).unwrap();
-            } else {
-                println!("{}", error.others_error);
-            }
-
-            return Ok(());
-        }
-        
+        let msg = msg.to_string();
+        let state = serde_json::from_str::<ServerState>(&msg).expect(&format!("Received JSON: {}", &msg));
         println!("\x1B[2J\x1B[1;1H");
+        match state {
+            ServerState::Error { player, message } => {
+                if player != self.nickname {
+                    println!("Player: {}", player);
+                }
+                println!("Error: {}", message);
+                Ok(())
+            },
+            ServerState::Info { message } => {
+                println!("{}", message);
+                Ok(())
+            },
+            ServerState::New { curr_player, board } => {
+                println!("ᕕ(⌐■_■)ᕗ ♪♬ Game state update:");
+                if curr_player == self.nickname {
+                    println!("Here is the current board ↓");
+                    println!("{}", board);
+                    let position = self.ask_for_play();
 
-        if let Ok(message) = serde_json::from_str::<CommonInfo>(&msg.to_string()) {
-            println!("{}", message.content);
+                    let play = ClientState::Play {
+                        nickname: &self.nickname,
+                        position,
+                        symbol: self.symbol.unwrap()
+                    };
 
-            return Ok(());
-        }
+                    self.server.send(
+                        Message::text(
+                            serde_json::to_string(&play).unwrap()
+                        )
+                    ).unwrap();
+                } else {
+                    println!("It's {} turn, waiting a move... (❍ᴥ❍ʋ)", curr_player);
+                }
 
-        if let Ok(new_state) = serde_json::from_str::<NewGameState>(&msg.to_string()) {
-            println!("ᕕ(⌐■_■)ᕗ ♪♬ Game state update:");
-            if new_state.turn_nickname == self.nickname {
-                println!("Here is the current board ↓");
-                println!("{}", new_state.visual_board);
-                let position = self.ask_for_play();
-
-                let play_json = json!({
-                    "nickname": self.nickname,
-                    "position": position,
-                    "symbol": self.symbol
-                }).to_string();
-
-                self.server.send(play_json).unwrap();
-            } else {
-                // TODO: Block input, because it's updating the game state
-                println!("It's {} turn, waiting a play... (❍ᴥ❍ʋ)", new_state.turn_nickname);
-            }
-
-            return Ok(());
-        }
-
-        if let Ok(winner) = serde_json::from_str::<Winner>(&msg.to_string()) {
-            if winner.winner == self.nickname {
-                println!("( ˘ ³˘)ノ°ﾟº❍｡ Congratulations! You're the winner!");
+                Ok(())
+            },
+            ServerState::Winner { player, board } => {
+                if player == self.nickname {
+                    println!("( ˘ ³˘)ノ°ﾟº❍｡ Congratulations! You're the winner!");
+                } else {
+                    println!("ε(´סּ︵סּ`)з Sorry, but {} won the match...", player);
+                }
                 println!("Here is the winner board: ↓");
-                println!("{}", winner.visual_board);
-            } else {
-                println!("ε(´סּ︵סּ`)з Sorry, but {} won the match...", winner.winner);
-                println!("Here is the winner board: ↓");
-                println!("{}", winner.visual_board);
-            }
+                println!("{}", board);
 
-            return Ok(());
+                Ok(())
+            },
+            ServerState::Draw { message, board } => {
+                println!("{message}");
+                println!("Here is the board: ↓");
+                println!("{}", board);
+                Ok(())
+            }
         }
-        
-        Ok(())
     }
 }
 
@@ -143,11 +128,6 @@ impl Client {
             position = position.trim().to_string();
 
             if let Ok(position) = position.parse::<u8>() {
-                if !Vec::from_iter(1..10).contains(&position) {
-                    println!("(ง •̀_•́)ง '{position}' is not a valid input, type only a number between or equal 1 and 9.");
-                    continue;
-                }
-
                 break position;
             }
 

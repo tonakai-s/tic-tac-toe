@@ -9,7 +9,7 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new() -> Board {
+    pub fn new() -> Self {
         let board_template = "
             | {} | {} | {} |
           -----------------
@@ -18,17 +18,12 @@ impl Board {
             | {} | {} | {} |
         ".to_string();
 
-        let mut board = Board { board: ('1'..='9').collect(), parsed_logic_board: None, visual_board: String::new(), board_template };
-        
-        board.initialize_visual_board();
-
-        board
-    }
-
-    fn initialize_visual_board(&mut self) {
-        let board = self.board_template.format(&self.board);
-
-        self.visual_board = board;
+        Self {
+            board: ('1'..='9').collect::<Vec<char>>(),
+            parsed_logic_board: None,
+            visual_board: board_template.format(&('1'..='9').collect::<Vec<char>>()),
+            board_template
+        }
     }
 
     pub fn update_board(&mut self, user_play: u8, new_symbol: char) -> Result<(), String> {
@@ -36,8 +31,10 @@ impl Board {
             return Err(format!("Position {} is already in use!", user_play));
         }
 
+        dbg!(&self.board);
+
         self.update_logic_board(user_play, new_symbol);
-        self.update_visual_board();
+        self.visual_board = self.board_template.format(&self.board);
 
         Ok(())
     }
@@ -53,11 +50,6 @@ impl Board {
         *position = new_symbol;
 
         self.update_parsed_logic_board()
-    }
-
-    fn update_visual_board(&mut self) {
-        let board = self.board_template.format(&self.board);
-        self.visual_board = board;
     }
 
     pub fn has_winner(&self) -> bool {
@@ -118,18 +110,14 @@ impl Board {
             diagonal_in_line.push(*line.get(decremented_index - i).unwrap());
         }
 
-        if self.is_vector_winner(&diagonal_in_line) {
-            return true;
-        }
-
-        false
+        self.is_vector_winner(&diagonal_in_line)
     }
 
     fn is_vector_winner(&self, vector: &[char]) -> bool {
         let first_element = vector.first().unwrap();
 
         for item in vector.iter() {
-            if ( *item != *first_element ) || *item == ' ' {
+            if *item != *first_element || *item == ' ' {
                 return false;
             }
         }
@@ -145,5 +133,9 @@ impl Board {
         });
 
         self.parsed_logic_board = Some(parsed_logic_board);
+    }
+
+    pub fn is_draw(&self) -> bool {
+        !self.board.iter().any(|item| *item == ' ')
     }
 }

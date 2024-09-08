@@ -17,6 +17,7 @@ pub fn new() -> ArgMatches {
                 .long("mode")
                 .value_parser([
                     PossibleValue::new("host").help("Set the client as a host and run the server."),
+                    PossibleValue::new("spec").help("Set the client as spectator and need URL to connect to the server."),
                     PossibleValue::new("guest").help("Set the client as guest and need URL to connect to the server.")
                 ])
                 .default_value("host")
@@ -27,6 +28,5 @@ pub fn new() -> ArgMatches {
                 .short('a')
                 .long("addr")
                 .help("Set the server host to connect.")
-                .required_if_eq("mode", "guest")
             ).get_matches()
 }
